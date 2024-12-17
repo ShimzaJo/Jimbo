@@ -1,0 +1,118 @@
+import pygame
+import random
+
+# Initialize pygame
+pygame.init()
+
+# Define constants
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+ROAD_WIDTH = 300
+CAR_WIDTH = 50
+CAR_HEIGHT = 100
+FPS = 60
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+
+# Load images
+background_image = pygame.image.load('background.png')  # Replace with a background image of your choice
+car_image = pygame.image.load('car.png')  # Replace with a car image of your choice
+car_image = pygame.transform.scale(car_image, (CAR_WIDTH, CAR_HEIGHT))
+
+# Initialize screen and clock
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("2D Racing Game")
+clock = pygame.time.Clock()
+
+# Car class
+class Car:
+    def __init__(self):
+        self.x = SCREEN_WIDTH // 2 - CAR_WIDTH // 2
+        self.y = SCREEN_HEIGHT - CAR_HEIGHT - 10
+        self.speed = 5
+
+    def move(self, dx):
+        self.x += dx
+        if self.x < SCREEN_WIDTH // 2 - ROAD_WIDTH // 2:
+            self.x = SCREEN_WIDTH // 2 - ROAD_WIDTH // 2
+        elif self.x + CAR_WIDTH > SCREEN_WIDTH // 2 + ROAD_WIDTH // 2:
+            self.x = SCREEN_WIDTH // 2 + ROAD_WIDTH // 2 - CAR_WIDTH
+
+    def draw(self):
+        screen.blit(car_image, (self.x, self.y))
+
+# Function to draw the road
+def draw_road():
+    pygame.draw.rect(screen, BLACK, [0, 0, SCREEN_WIDTH, SCREEN_HEIGHT])
+    pygame.draw.rect(screen, WHITE, [SCREEN_WIDTH//2 - ROAD_WIDTH//2, 0, ROAD_WIDTH, SCREEN_HEIGHT])
+
+# Function to display text
+def display_text(text, font, color, x, y):
+    label = font.render(text, True, color)
+    screen.blit(label, (x, y))
+
+# Function to handle game over
+def game_over():
+    font = pygame.font.SysFont('Arial', 50)
+    display_text("GAME OVER", font, RED, SCREEN_WIDTH // 3, SCREEN_HEIGHT // 3)
+    pygame.display.update()
+    pygame.time.wait(2000)
+
+# Function to update the road (scrolling effect)
+def update_road_scroll(scroll_speed):
+    screen.blit(background_image, (0, 0))
+    pygame.draw.rect(screen, WHITE, [SCREEN_WIDTH//2 - ROAD_WIDTH//2, 0, ROAD_WIDTH, SCREEN_HEIGHT])
+    road_scroll = (scroll_speed % SCREEN_HEIGHT)
+    pygame.draw.rect(screen, GREEN, [SCREEN_WIDTH//2 - ROAD_WIDTH//2, road_scroll - SCREEN_HEIGHT, ROAD_WIDTH, SCREEN_HEIGHT])
+
+# Main game loop
+def game_loop():
+    car = Car()
+    road_scroll = 0
+    car_dx = 0
+    game_running = True
+    while game_running:
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    car_dx = -car.speed
+                elif event.key == pygame.K_RIGHT:
+                    car_dx = car.speed
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                    car_dx = 0
+        
+        # Update car position
+        car.move(car_dx)
+
+        # Update road scroll
+        road_scroll += 5
+        if road_scroll >= SCREEN_HEIGHT:
+            road_scroll = 0
+        
+        # Draw everything
+        update_road_scroll(road_scroll)
+        car.draw()
+
+        # Refresh screen
+        pygame.display.update()
+
+        # Check for collisions
+        if car.x < SCREEN_WIDTH // 2 - ROAD_WIDTH // 2 or car.x + CAR_WIDTH > SCREEN_WIDTH // 2 + ROAD_WIDTH // 2:
+            game_over()
+            game_running = False
+
+        # Set frame rate
+        clock.tick(FPS)
+
+    pygame.quit()
+
+# Run the game loop
+game_loop()
